@@ -1,0 +1,27 @@
+{
+  "entities": {
+    "ScheduledSlip": {
+      "title": "Scheduled Slip",
+      "description": "A scheduled PDF slip to be sent via WhatsApp",
+      "type": "object",
+      "properties": {
+        "phone": { "type": "string" },
+        "base64Pdf": { "type": "string" },
+        "filename": { "type": "string" },
+        "caption": { "type": "string" },
+        "scheduledTime": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "sent", "failed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "sentAt": { "type": "string", "format": "date-time" },
+        "error": { "type": "string" }
+      },
+      "required": ["phone", "base64Pdf", "scheduledTime", "status"]
+    }
+  },
+  "firestore": {
+    "scheduled_slips/{slipId}": {
+      "schema": "ScheduledSlip",
+      "description": "Schedules for sending slips"
+    }
+  }
+}
