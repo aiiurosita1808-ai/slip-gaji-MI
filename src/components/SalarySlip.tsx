@@ -187,19 +187,45 @@ export function SalarySlipManager({ teachers, slips, setSlips, settings }: Salar
 
       const scheduleDate = new Date(scheduleTime).toISOString();
 
-      const response = await fetch('/api/schedule-slip', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone: teacher.phone,
-          base64Pdf,
-          filename,
-          caption: generateMessage(teacher.name, viewingSlip.month, viewingSlip.year),
-          scheduledTime: scheduleDate,
-          fonnteToken: settings.fonnteToken,
-          host: window.location.origin
-        })
-      });
+      // Upload to Filebin
+        const binId = 'slip' + Date.now() + Math.floor(Math.random()*1000);
+        const filebinUrl = `https://filebin.net/${binId}/${filename}`;
+        
+        // Convert base64 to Blob
+        const base64Data = base64Pdf.split('base64,')[1] || base64Pdf;
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+        await fetch(filebinUrl, {
+            method: 'POST',
+            body: blob,
+            headers: { 'Content-Type': 'application/pdf' }
+        });
+
+        // Send to Fonnte
+        const formData = new FormData();
+        formData.append('target', teacher.phone);
+        formData.append('url', filebinUrl);
+        formData.append('message', caption);
+        
+        // Format schedule for Fonnte: YYYY-MM-DD HH:mm:ss
+        const dateObj = new Date(scheduleDate);
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const formattedSchedule = `${dateObj.getFullYear()}-${pad(dateObj.getMonth()+1)}-${pad(dateObj.getDate())} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
+        formData.append('schedule', formattedSchedule);
+
+        const response = await fetch('https://api.fonnte.com/send', {
+            method: 'POST',
+            headers: {
+                'Authorization': settings.fonnteToken
+            },
+            body: formData
+        });
 
       if (!response.ok) {
         throw new Error('Failed to schedule');
@@ -257,18 +283,44 @@ export function SalarySlipManager({ teachers, slips, setSlips, settings }: Salar
         const staggerMs = i * 15 * 1000; 
         const scheduleDate = new Date(new Date(scheduleTime).getTime() + staggerMs).toISOString();
 
-        const response = await fetch('/api/schedule-slip', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            phone: teacher.phone,
-            base64Pdf,
-            filename,
-            caption: generateMessage(teacher.name, slip.month, slip.year),
-            scheduledTime: scheduleDate,
-            fonnteToken: settings.fonnteToken,
-            host: window.location.origin
-          })
+        // Upload to Filebin
+        const binId = 'slip' + Date.now() + Math.floor(Math.random()*1000);
+        const filebinUrl = `https://filebin.net/${binId}/${filename}`;
+        
+        // Convert base64 to Blob
+        const base64Data = base64Pdf.split('base64,')[1] || base64Pdf;
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+        await fetch(filebinUrl, {
+            method: 'POST',
+            body: blob,
+            headers: { 'Content-Type': 'application/pdf' }
+        });
+
+        // Send to Fonnte
+        const formData = new FormData();
+        formData.append('target', teacher.phone);
+        formData.append('url', filebinUrl);
+        formData.append('message', generateMessage(teacher.name, slip.month, slip.year));
+        
+        // Format schedule for Fonnte: YYYY-MM-DD HH:mm:ss
+        const dateObj = new Date(scheduleDate);
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const formattedSchedule = `${dateObj.getFullYear()}-${pad(dateObj.getMonth()+1)}-${pad(dateObj.getDate())} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
+        formData.append('schedule', formattedSchedule);
+
+        const response = await fetch('https://api.fonnte.com/send', {
+            method: 'POST',
+            headers: {
+                'Authorization': settings.fonnteToken
+            },
+            body: formData
         });
         if (response.ok) successCount++; else failCount++;
       } catch (err) {
