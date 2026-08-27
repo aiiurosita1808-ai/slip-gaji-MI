@@ -199,12 +199,11 @@ export function SalarySlipManager({ teachers, slips, setSlips, settings }: Salar
             byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
         const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        const blob = new Blob([byteArray], { type: 'text/plain' }); // Use text/plain to bypass CORS preflight
 
         await fetch(filebinUrl, {
             method: 'POST',
-            body: blob,
-            headers: { 'Content-Type': 'application/pdf' }
+            body: blob
         });
 
         // Send to Fonnte
@@ -295,12 +294,11 @@ export function SalarySlipManager({ teachers, slips, setSlips, settings }: Salar
             byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
         const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        const blob = new Blob([byteArray], { type: 'text/plain' }); // Use text/plain to bypass CORS preflight
 
         await fetch(filebinUrl, {
             method: 'POST',
-            body: blob,
-            headers: { 'Content-Type': 'application/pdf' }
+            body: blob
         });
 
         // Send to Fonnte
