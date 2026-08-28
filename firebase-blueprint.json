@@ -1,27 +1,94 @@
 {
   "entities": {
-    "ScheduledSlip": {
-      "title": "Scheduled Slip",
-      "description": "A scheduled PDF slip to be sent via WhatsApp",
+    "Teacher": {
+      "title": "Teacher",
+      "description": "Teacher data",
       "type": "object",
       "properties": {
-        "phone": { "type": "string" },
-        "base64Pdf": { "type": "string" },
-        "filename": { "type": "string" },
-        "caption": { "type": "string" },
-        "scheduledTime": { "type": "string", "format": "date-time" },
-        "status": { "type": "string", "enum": ["pending", "sent", "failed"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "sentAt": { "type": "string", "format": "date-time" },
-        "error": { "type": "string" }
-      },
-      "required": ["phone", "base64Pdf", "scheduledTime", "status"]
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "nip": { "type": "string", "maxLength": 50 },
+        "name": { "type": "string", "maxLength": 100 },
+        "position": { "type": "string", "maxLength": 100 },
+        "additionalTask": { "type": "string", "maxLength": 100 },
+        "workTenure": { "type": "string", "maxLength": 50 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 100 },
+        "basicSalary": { "type": "number" },
+        "teachingLoad": { "type": "number" },
+        "homeroomIncentive": { "type": "number" },
+        "annualPerformanceIncentive": { "type": "number" },
+        "monthlyPerformanceIncentive": { "type": "number" },
+        "tenureAllowance": { "type": "number" },
+        "educationAllowance": { "type": "number" },
+        "bpjsAllowance": { "type": "number" },
+        "qurbanAllowance": { "type": "number" },
+        "bpjsDeduction": { "type": "number" },
+        "qurbanDeduction": { "type": "number" },
+        "ownerId": { "type": "string", "maxLength": 128 }
+      }
+    },
+    "SalarySlip": {
+      "title": "SalarySlip",
+      "description": "Salary slip records",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "teacherId": { "type": "string", "maxLength": 128 },
+        "month": { "type": "string", "maxLength": 20 },
+        "year": { "type": "number" },
+        "date": { "type": "string", "maxLength": 50 },
+        "teacherName": { "type": "string", "maxLength": 100 },
+        "teacherNip": { "type": "string", "maxLength": 50 },
+        "teacherPosition": { "type": "string", "maxLength": 100 },
+        "teacherAdditionalTask": { "type": "string", "maxLength": 100 },
+        "teacherWorkTenure": { "type": "string", "maxLength": 50 },
+        "basicSalary": { "type": "number" },
+        "teachingLoad": { "type": "number" },
+        "homeroomIncentive": { "type": "number" },
+        "annualPerformanceIncentive": { "type": "number" },
+        "monthlyPerformanceIncentive": { "type": "number" },
+        "tenureAllowance": { "type": "number" },
+        "educationAllowance": { "type": "number" },
+        "bpjsAllowance": { "type": "number" },
+        "qurbanAllowance": { "type": "number" },
+        "bpjsDeduction": { "type": "number" },
+        "qurbanDeduction": { "type": "number" },
+        "totalPenerimaan": { "type": "number" },
+        "totalPotongan": { "type": "number" },
+        "totalSalary": { "type": "number" },
+        "ownerId": { "type": "string", "maxLength": 128 }
+      }
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "App settings",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "schoolName": { "type": "string", "maxLength": 200 },
+        "schoolAddress": { "type": "string", "maxLength": 500 },
+        "academicYear": { "type": "string", "maxLength": 50 },
+        "signatoryRole": { "type": "string", "maxLength": 100 },
+        "signatoryName": { "type": "string", "maxLength": 100 },
+        "signatoryNip": { "type": "string", "maxLength": 50 },
+        "waTemplate": { "type": "string", "maxLength": 1000 },
+        "fonnteToken": { "type": "string", "maxLength": 200 },
+        "ownerId": { "type": "string", "maxLength": 128 }
+      }
     }
   },
   "firestore": {
-    "scheduled_slips/{slipId}": {
-      "schema": "ScheduledSlip",
-      "description": "Schedules for sending slips"
+    "users/{userId}/teachers/{teacherId}": {
+      "schema": { "$ref": "#/entities/Teacher" },
+      "description": "Teachers list per user"
+    },
+    "users/{userId}/slips/{slipId}": {
+      "schema": { "$ref": "#/entities/SalarySlip" },
+      "description": "Salary slips per user"
+    },
+    "users/{userId}/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/Settings" },
+      "description": "Settings per user"
     }
   }
 }
