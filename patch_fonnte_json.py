@@ -13,8 +13,7 @@ old_single = """      // Send to Fonnte using URLSearchParams
       const response = await fetch('https://api.fonnte.com/send', {
           method: 'POST',
           headers: {
-              'Authorization': settings.fonnteToken,
-              'Content-Type': 'application/x-www-form-urlencoded'
+              'Authorization': settings.fonnteToken
           },
           body: urlencoded
       });"""
@@ -45,8 +44,7 @@ old_mass = """        // Send to Fonnte using URLSearchParams
         const response = await fetch('https://api.fonnte.com/send', {
             method: 'POST',
             headers: {
-                'Authorization': settings.fonnteToken,
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Authorization': settings.fonnteToken
             },
             body: urlencoded
         });"""
