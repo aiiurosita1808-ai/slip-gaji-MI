@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Teacher, SalarySlip, AppSettings } from '../types';
 import { Printer, FilePlus, ChevronLeft, Download, Send, Clock, X, Mail, CheckCircle } from 'lucide-react';
 import { toPng, toJpeg } from 'html-to-image';
+import { db } from '../firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import { SlipDocument } from './SlipDocument';
 
@@ -167,7 +169,7 @@ export function SalarySlipManager({ teachers, slips, setSlips, settings }: Salar
 
   const handleScheduleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!viewingSlip || !slipRef.current || !scheduleTime) return;
+    if (!viewingSlip || !scheduleTime) return;
 
     const teacher = teachers.find(t => t.id === viewingSlip.teacherId);
     if (!teacher || !teacher.phone) {
@@ -176,65 +178,51 @@ export function SalarySlipManager({ teachers, slips, setSlips, settings }: Salar
     }
 
     try {
-      const dataUrl = await toJpeg(slipRef.current, { cacheBust: true, quality: 0.6, pixelRatio: 1.5 });
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (slipRef.current.offsetHeight * pdfWidth) / slipRef.current.offsetWidth;
-      pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+      // Generate a unique ID for the shared slip
+      const sharedId = viewingSlip.id + '_' + Date.now().toString(36);
       
-      const base64Pdf = pdf.output('datauristring');
-      const filename = `Slip_Gaji_${viewingSlip.teacherName.replace(/\s+/g, '_')}_${viewingSlip.month}_${viewingSlip.year}.pdf`;
+      // Save to Firestore shared_slips
+      await setDoc(doc(db, 'shared_slips', sharedId), {
+        slip: viewingSlip,
+        settings: settings
+      });
 
+      const slipLink = `https://slipgajimialbarokah.netlify.app/?shared=${sharedId}`;
+      const finalMessage = `${generateMessage(teacher.name, viewingSlip.month, viewingSlip.year)}
+
+Silakan klik tautan berikut untuk melihat atau mengunduh slip gaji Anda:
+${slipLink}`;
       const scheduleDate = new Date(scheduleTime).toISOString();
 
-      // Upload to Filebin
-        const binId = 'slip' + Date.now() + Math.floor(Math.random()*1000);
-        const filebinUrl = `https://filebin.net/${binId}/${filename}`;
-        
-        // Convert base64 to Blob
-        const base64Data = base64Pdf.split('base64,')[1] || base64Pdf;
-        const byteCharacters = atob(base64Data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'text/plain' }); // Use text/plain to bypass CORS preflight
+      // Format schedule for Fonnte: YYYY-MM-DD HH:mm:ss
+      const dateObj = new Date(scheduleDate);
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const formattedSchedule = `${dateObj.getFullYear()}-${pad(dateObj.getMonth()+1)}-${pad(dateObj.getDate())} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
+      
+      // Send to Fonnte using FormData
+      const formData = new FormData();
+      formData.append('target', teacher.phone);
+      formData.append('message', finalMessage);
+      formData.append('schedule', formattedSchedule);
 
-        await fetch(filebinUrl, {
-            method: 'POST',
-            body: blob
-        });
+      const response = await fetch('https://api.fonnte.com/send', {
+          method: 'POST',
+          headers: {
+              'Authorization': settings.fonnteToken
+          },
+          body: formData
+      });
 
-        // Send to Fonnte
-        const formData = new FormData();
-        formData.append('target', teacher.phone);
-        formData.append('url', filebinUrl);
-        formData.append('message', caption);
-        
-        // Format schedule for Fonnte: YYYY-MM-DD HH:mm:ss
-        const dateObj = new Date(scheduleDate);
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        const formattedSchedule = `${dateObj.getFullYear()}-${pad(dateObj.getMonth()+1)}-${pad(dateObj.getDate())} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
-        formData.append('schedule', formattedSchedule);
-
-        const response = await fetch('https://api.fonnte.com/send', {
-            method: 'POST',
-            headers: {
-                'Authorization': settings.fonnteToken
-            },
-            body: formData
-        });
-
-      if (!response.ok) {
-        throw new Error('Failed to schedule');
+      const result = await response.json();
+      if (!response.ok || result.status === false) {
+        throw new Error(result.reason || 'Failed to schedule');
       }
 
       alert('Berhasil dijadwalkan! Slip gaji akan dikirim via WhatsApp sesuai jadwal.');
       setIsScheduling(false);
     } catch (error) {
       console.error(error);
-      alert('Terjadi kesalahan saat menjadwalkan.');
+      alert('Gagal menjadwalkan: ' + (error instanceof Error ? error.message : 'Silakan coba lagi.'));
     }
   };
 
@@ -266,51 +254,31 @@ export function SalarySlipManager({ teachers, slips, setSlips, settings }: Salar
       }
 
       try {
-        const slipElement = document.getElementById(`hidden-slip-${slip.id}`);
-        if (!slipElement) throw new Error('Slip render element not found');
+        const sharedId = slip.id + '_' + Date.now().toString(36);
+        await setDoc(doc(db, 'shared_slips', sharedId), {
+          slip: slip,
+          settings: settings
+        });
 
-        const dataUrl = await toJpeg(slipElement, { cacheBust: true, quality: 0.6, pixelRatio: 1.5 });
-        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (slipElement.offsetHeight * pdfWidth) / slipElement.offsetWidth;
-        pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-        
-        const base64Pdf = pdf.output('datauristring');
-        const filename = `Slip_Gaji_${slip.teacherName.replace(/\s+/g, '_')}_${slip.month}_${slip.year}.pdf`;
-        
+        const slipLink = `https://slipgajimialbarokah.netlify.app/?shared=${sharedId}`;
+        const finalMessage = `${generateMessage(teacher.name, slip.month, slip.year)}
+
+Silakan klik tautan berikut untuk melihat atau mengunduh slip gaji Anda:
+${slipLink}`;
+
         // Stagger schedule time by 15 seconds for each slip to avoid spam triggers
         const staggerMs = i * 15 * 1000; 
         const scheduleDate = new Date(new Date(scheduleTime).getTime() + staggerMs).toISOString();
 
-        // Upload to Filebin
-        const binId = 'slip' + Date.now() + Math.floor(Math.random()*1000);
-        const filebinUrl = `https://filebin.net/${binId}/${filename}`;
-        
-        // Convert base64 to Blob
-        const base64Data = base64Pdf.split('base64,')[1] || base64Pdf;
-        const byteCharacters = atob(base64Data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'text/plain' }); // Use text/plain to bypass CORS preflight
-
-        await fetch(filebinUrl, {
-            method: 'POST',
-            body: blob
-        });
-
-        // Send to Fonnte
-        const formData = new FormData();
-        formData.append('target', teacher.phone);
-        formData.append('url', filebinUrl);
-        formData.append('message', generateMessage(teacher.name, slip.month, slip.year));
-        
         // Format schedule for Fonnte: YYYY-MM-DD HH:mm:ss
         const dateObj = new Date(scheduleDate);
         const pad = (n: number) => n.toString().padStart(2, '0');
         const formattedSchedule = `${dateObj.getFullYear()}-${pad(dateObj.getMonth()+1)}-${pad(dateObj.getDate())} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
+
+        // Send to Fonnte using FormData
+        const formData = new FormData();
+        formData.append('target', teacher.phone);
+        formData.append('message', finalMessage);
         formData.append('schedule', formattedSchedule);
 
         const response = await fetch('https://api.fonnte.com/send', {
@@ -320,7 +288,8 @@ export function SalarySlipManager({ teachers, slips, setSlips, settings }: Salar
             },
             body: formData
         });
-        if (response.ok) successCount++; else failCount++;
+        const result = await response.json();
+        if (response.ok && result.status !== false) successCount++; else failCount++;
       } catch (err) {
         failCount++;
       }

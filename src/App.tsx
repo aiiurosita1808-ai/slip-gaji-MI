@@ -4,6 +4,7 @@ import { Dashboard } from './components/Dashboard';
 import { TeacherManagement } from './components/TeacherManagement';
 import { SalarySlipManager } from './components/SalarySlip';
 import { SettingsManager } from './components/Settings';
+import { SharedSlipViewer } from './components/SharedSlipViewer';
 import { useCloudStorage } from './hooks/useCloudStorage';
 import { TabType, Teacher, SalarySlip, AppSettings } from './types';
 import { auth, loginWithGoogle, logout } from './firebase';
@@ -71,6 +72,9 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const queryParams = new URLSearchParams(window.location.search);
+  const sharedId = queryParams.get('shared');
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -78,6 +82,10 @@ export default function App() {
     });
     return () => unsubscribe();
   }, []);
+
+  if (sharedId) {
+    return <SharedSlipViewer slipId={sharedId} />;
+  }
 
   if (loading) {
     return (
