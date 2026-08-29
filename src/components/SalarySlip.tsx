@@ -199,18 +199,18 @@ ${slipLink}`;
       const pad = (n: number) => n.toString().padStart(2, '0');
       const formattedSchedule = `${dateObj.getFullYear()}-${pad(dateObj.getMonth()+1)}-${pad(dateObj.getDate())} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
       
-      // Send to Fonnte via backend proxy (avoids browser quirks)
-      const response = await fetch('/api/send-wa', {
+      // Send to Fonnte using URLSearchParams
+      const urlencoded = new URLSearchParams();
+      urlencoded.append('target', teacher.phone);
+      urlencoded.append('message', finalMessage);
+      urlencoded.append('schedule', formattedSchedule);
+
+      const response = await fetch('https://api.fonnte.com/send', {
           method: 'POST',
           headers: {
-              'Content-Type': 'application/json'
+              'Authorization': settings.fonnteToken.trim()
           },
-          body: JSON.stringify({
-              token: settings.fonnteToken.trim(),
-              target: teacher.phone,
-              message: finalMessage,
-              schedule: formattedSchedule
-          })
+          body: urlencoded
       });
 
       const result = await response.json();
@@ -275,18 +275,18 @@ ${slipLink}`;
         const pad = (n: number) => n.toString().padStart(2, '0');
         const formattedSchedule = `${dateObj.getFullYear()}-${pad(dateObj.getMonth()+1)}-${pad(dateObj.getDate())} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
 
-        // Send to Fonnte via backend proxy (avoids browser quirks)
-        const response = await fetch('/api/send-wa', {
+        // Send to Fonnte using URLSearchParams
+        const urlencoded = new URLSearchParams();
+        urlencoded.append('target', teacher.phone);
+        urlencoded.append('message', finalMessage);
+        urlencoded.append('schedule', formattedSchedule);
+
+        const response = await fetch('https://api.fonnte.com/send', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Authorization': settings.fonnteToken.trim()
             },
-            body: JSON.stringify({
-                token: settings.fonnteToken.trim(),
-                target: teacher.phone,
-                message: finalMessage,
-                schedule: formattedSchedule
-            })
+            body: urlencoded
         });
         const result = await response.json();
         if (response.ok && result.status !== false) successCount++; else failCount++;
