@@ -199,18 +199,19 @@ ${slipLink}`;
       const pad = (n: number) => n.toString().padStart(2, '0');
       const formattedSchedule = `${dateObj.getFullYear()}-${pad(dateObj.getMonth()+1)}-${pad(dateObj.getDate())} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
       
-      // Send to Fonnte using FormData
-      const formData = new FormData();
-      formData.append('target', teacher.phone);
-      formData.append('message', finalMessage);
-      formData.append('schedule', formattedSchedule);
+      // Send to Fonnte using URLSearchParams
+      const urlencoded = new URLSearchParams();
+      urlencoded.append('target', teacher.phone);
+      urlencoded.append('message', finalMessage);
+      urlencoded.append('schedule', formattedSchedule);
 
       const response = await fetch('https://api.fonnte.com/send', {
           method: 'POST',
           headers: {
-              'Authorization': settings.fonnteToken
+              'Authorization': settings.fonnteToken,
+              'Content-Type': 'application/x-www-form-urlencoded'
           },
-          body: formData
+          body: urlencoded
       });
 
       const result = await response.json();
@@ -275,18 +276,19 @@ ${slipLink}`;
         const pad = (n: number) => n.toString().padStart(2, '0');
         const formattedSchedule = `${dateObj.getFullYear()}-${pad(dateObj.getMonth()+1)}-${pad(dateObj.getDate())} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
 
-        // Send to Fonnte using FormData
-        const formData = new FormData();
-        formData.append('target', teacher.phone);
-        formData.append('message', finalMessage);
-        formData.append('schedule', formattedSchedule);
+        // Send to Fonnte using URLSearchParams
+        const urlencoded = new URLSearchParams();
+        urlencoded.append('target', teacher.phone);
+        urlencoded.append('message', finalMessage);
+        urlencoded.append('schedule', formattedSchedule);
 
         const response = await fetch('https://api.fonnte.com/send', {
             method: 'POST',
             headers: {
-                'Authorization': settings.fonnteToken
+                'Authorization': settings.fonnteToken,
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: formData
+            body: urlencoded
         });
         const result = await response.json();
         if (response.ok && result.status !== false) successCount++; else failCount++;

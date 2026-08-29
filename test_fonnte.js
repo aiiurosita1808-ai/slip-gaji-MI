@@ -1,12 +1,14 @@
-import fetch from 'node-fetch';
-
-async function testFonnte() {
+const fetch = require('node-fetch');
+async function test() {
+  const fd = new URLSearchParams();
+  fd.append('target', '081234567890');
+  fd.append('message', 'test');
+  
   const res = await fetch('https://api.fonnte.com/send', {
-    method: 'OPTIONS',
-    headers: {
-      'Origin': 'https://slipgajimialbarokah.netlify.app'
-    }
+    method: 'POST',
+    headers: { 'Authorization': 'test' },
+    body: fd
   });
-  console.log("CORS headers:", res.headers.get('access-control-allow-origin'));
+  console.log(await res.text());
 }
-testFonnte();
+test();
