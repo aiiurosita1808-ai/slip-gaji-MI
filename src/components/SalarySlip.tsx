@@ -199,18 +199,19 @@ ${slipLink}`;
       const pad = (n: number) => n.toString().padStart(2, '0');
       const formattedSchedule = `${dateObj.getFullYear()}-${pad(dateObj.getMonth()+1)}-${pad(dateObj.getDate())} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
       
-      // Send to Fonnte using JSON
+      // Send to Fonnte using URLSearchParams string
+      const urlencoded = new URLSearchParams();
+      urlencoded.append('target', teacher.phone);
+      urlencoded.append('message', finalMessage);
+      urlencoded.append('schedule', formattedSchedule);
+
       const response = await fetch('https://api.fonnte.com/send', {
           method: 'POST',
           headers: {
               'Authorization': settings.fonnteToken.trim(),
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/x-www-form-urlencoded'
           },
-          body: JSON.stringify({
-              target: teacher.phone,
-              message: finalMessage,
-              schedule: formattedSchedule
-          })
+          body: urlencoded.toString()
       });
 
       const result = await response.json();
@@ -275,18 +276,19 @@ ${slipLink}`;
         const pad = (n: number) => n.toString().padStart(2, '0');
         const formattedSchedule = `${dateObj.getFullYear()}-${pad(dateObj.getMonth()+1)}-${pad(dateObj.getDate())} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
 
-        // Send to Fonnte using JSON
+        // Send to Fonnte using URLSearchParams string
+        const urlencoded = new URLSearchParams();
+        urlencoded.append('target', teacher.phone);
+        urlencoded.append('message', finalMessage);
+        urlencoded.append('schedule', formattedSchedule);
+
         const response = await fetch('https://api.fonnte.com/send', {
             method: 'POST',
             headers: {
                 'Authorization': settings.fonnteToken.trim(),
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: JSON.stringify({
-                target: teacher.phone,
-                message: finalMessage,
-                schedule: formattedSchedule
-            })
+            body: urlencoded.toString()
         });
         const result = await response.json();
         if (response.ok && result.status !== false) successCount++; else failCount++;
